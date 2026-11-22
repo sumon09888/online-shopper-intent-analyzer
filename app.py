@@ -442,7 +442,7 @@ with st.spinner("Training three machine learning models..."):
 # 8. SIDEBAR
 # =====================================================
 
-st.sidebar.markdown("# 🛍️ Shopper AI")
+st.sidebar.markdown("# 🛍️ Online Shopper")
 st.sidebar.caption("ANALYTICS DASHBOARD")
 
 page = st.sidebar.radio(
