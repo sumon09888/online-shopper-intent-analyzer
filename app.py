@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -52,66 +51,333 @@ MODEL_PATH = BASE_DIR / "shopper_intent_model.pkl"
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --bg: #08090d;
+    --panel: rgba(18, 20, 27, 0.88);
+    --panel-strong: #11141b;
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #f4f1eb;
+    --muted: #9295a1;
+    --amber: #e89a45;
+    --amber-light: #ffc477;
+}
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
 
 .stApp {
-    background-color: #f5f7fb;
+    background:
+        radial-gradient(ellipse at 82% 8%, rgba(143, 83, 35, 0.16), transparent 34%),
+        radial-gradient(ellipse at 8% 92%, rgba(89, 61, 38, 0.12), transparent 32%),
+        var(--bg);
+    color: var(--text);
+    animation: pageFade 0.8s ease both;
+}
+
+/* Subtle moving amber light in the background */
+.stApp::before {
+    content: "";
+    position: fixed;
+    width: 340px;
+    height: 340px;
+    top: 10%;
+    right: -160px;
+    border-radius: 50%;
+    background: rgba(232, 154, 69, 0.08);
+    filter: blur(75px);
+    pointer-events: none;
+    z-index: 0;
+    animation: ambientGlow 9s ease-in-out infinite alternate;
 }
 
 .block-container {
-    padding-top: 2rem;
+    padding-top: 2.1rem;
+    padding-bottom: 3rem;
+    max-width: 1500px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Animated glass sidebar */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #111116 0%, #090a0e 100%);
+    border-right: 1px solid rgba(232, 154, 69, 0.18);
+}
+
+section[data-testid="stSidebar"] > div:first-child {
+    background: transparent;
+}
+
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    gap: 0.7rem;
+}
+
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] span {
+    color: #dedbd5;
+}
+
+section[data-testid="stSidebar"] h1 {
+    color: var(--amber-light);
+    text-shadow: 0 0 18px rgba(232, 154, 69, 0.3);
+}
+
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"]:first-child {
+    animation: fadeUp 0.7s ease both;
+}
+
+/* Navigation items */
+section[data-testid="stSidebar"] [role="radiogroup"] {
+    gap: 9px;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 10px 12px;
+    transition: background 220ms ease, border-color 220ms ease,
+                transform 220ms ease, box-shadow 220ms ease;
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label:hover {
+    background: rgba(232, 154, 69, 0.10);
+    border-color: rgba(232, 154, 69, 0.25);
+    transform: translateX(4px);
+    box-shadow: 0 0 18px rgba(232, 154, 69, 0.08);
+}
+
+section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+    background: linear-gradient(100deg, rgba(232, 154, 69, 0.19), rgba(232, 154, 69, 0.045));
+    border-color: rgba(232, 154, 69, 0.34);
+    box-shadow: inset 3px 0 0 var(--amber), 0 5px 22px rgba(0, 0, 0, 0.18);
 }
 
 .main-title {
-    font-size: 34px;
+    font-size: clamp(27px, 3vw, 38px);
     font-weight: 800;
-    color: #172554;
+    letter-spacing: -1.2px;
+    color: #f7f2e9;
+    text-shadow: 0 0 26px rgba(232, 154, 69, 0.13);
+    animation: fadeUp 650ms ease both;
 }
 
 .subtitle {
-    color: #64748b;
+    color: var(--muted);
     font-size: 15px;
+    animation: fadeUp 850ms ease both;
 }
 
 .metric-card {
-    background: white;
-    padding: 20px;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(29, 29, 34, 0.94), rgba(15, 17, 23, 0.94));
+    padding: 21px;
+    border-radius: 17px;
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(14px);
+    animation: cardRise 700ms cubic-bezier(.2,.8,.2,1) both;
+    transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+}
+
+.metric-card::after {
+    content: "";
+    position: absolute;
+    top: -70%;
+    left: -35%;
+    width: 55%;
+    height: 230%;
+    transform: rotate(25deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.055), transparent);
+    animation: cardShimmer 7s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(232, 154, 69, 0.42);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.32), 0 0 24px rgba(232, 154, 69, 0.07);
 }
 
 .metric-label {
-    color: #64748b;
-    font-size: 14px;
+    color: #a7a6a4;
+    font-size: 13px;
+    letter-spacing: 0.2px;
 }
 
 .metric-value {
-    color: #172554;
-    font-size: 27px;
+    color: #fff2df;
+    font-size: 29px;
     font-weight: 800;
+    margin-top: 5px;
+    text-shadow: 0 0 18px rgba(232, 154, 69, 0.14);
 }
 
 .section-title {
     font-size: 23px;
     font-weight: 750;
-    color: #172554;
+    color: #f1e9dd;
 }
 
-div.stButton > button {
-    background: #4f46e5;
-    color: white;
-    border-radius: 9px;
-    border: none;
-    font-weight: 700;
+/* Streamlit metric cards and content surfaces */
+div[data-testid="stMetric"],
+div[data-testid="stDataFrame"],
+div[data-testid="stTable"],
+div[data-testid="stExpander"] {
+    background: rgba(18, 20, 27, 0.78);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px;
 }
 
-div.stButton > button:hover {
-    background: #3730a3;
-    color: white;
+div[data-testid="stMetric"] label,
+div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+    color: #f3e9dc;
+}
+
+/* Inputs */
+.stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div,
+.stMultiSelect div[data-baseweb="select"] > div, .stTextArea textarea {
+    background: #15171e !important;
+    color: #f5f1ea !important;
+    border-color: rgba(255,255,255,0.13) !important;
+    border-radius: 10px !important;
+}
+
+label, .stMarkdown, .stCaption, [data-testid="stWidgetLabel"] {
+    color: #d8d4ce;
+}
+
+/* Buttons */
+div.stButton > button, div.stFormSubmitButton > button {
+    background: linear-gradient(110deg, #b96f2d, #e49a4a 55%, #f1b66e);
+    color: #17110b;
+    border-radius: 11px;
+    border: 1px solid rgba(255, 199, 128, 0.38);
+    font-weight: 800;
+    padding: 0.55rem 1.1rem;
+    box-shadow: 0 7px 22px rgba(191, 112, 43, 0.18);
+    transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+div.stButton > button:hover, div.stFormSubmitButton > button:hover {
+    color: #100c08;
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(232, 154, 69, 0.28);
+}
+
+div.stButton > button:active, div.stFormSubmitButton > button:active {
+    transform: scale(0.98);
+}
+
+/* Alerts, separators and links */
+div[data-testid="stAlert"] {
+    background: rgba(25, 25, 29, 0.88);
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}
+hr {
+    border-color: rgba(255,255,255,0.10) !important;
+}
+a {
+    color: var(--amber-light) !important;
+}
+
+/* Tabs and expanders */
+button[data-baseweb="tab"] {
+    color: #c8c2b8 !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: var(--amber-light) !important;
+    border-bottom-color: var(--amber) !important;
+}
+
+/* Smooth chart and section entrance */
+div[data-testid="stPlotlyChart"], div[data-testid="stImage"],
+div[data-testid="stDataFrame"], div[data-testid="stTable"] {
+    animation: fadeUp 700ms ease both;
+}
+
+/* Lantern-inspired warm glow */
+section[data-testid="stSidebar"]::after {
+    content: "";
+    position: absolute;
+    top: 115px;
+    left: 22px;
+    width: 3px;
+    height: 245px;
+    border-radius: 5px;
+    background: linear-gradient(180deg, rgba(255,190,112,0.9), rgba(232,154,69,0.15), transparent);
+    box-shadow: 0 0 15px rgba(232,154,69,0.28);
+    opacity: 0.65;
+    pointer-events: none;
+    animation: lanternPulse 3.5s ease-in-out infinite;
+}
+
+@keyframes pageFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardRise {
+    from { opacity: 0; transform: translateY(18px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ambientGlow {
+    from { transform: translate(-25px, -10px) scale(0.9); opacity: 0.55; }
+    to { transform: translate(-110px, 70px) scale(1.25); opacity: 1; }
+}
+
+@keyframes cardShimmer {
+    0%, 65%, 100% { left: -60%; }
+    82% { left: 130%; }
+}
+
+@keyframes lanternPulse {
+    0%, 100% { opacity: 0.35; filter: blur(0.2px); }
+    50% { opacity: 0.9; filter: blur(1px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 </style>
 """, unsafe_allow_html=True)
+
+# Match Matplotlib charts to the animated dark dashboard theme.
+plt.rcParams.update({
+    "figure.facecolor": "#11141b",
+    "axes.facecolor": "#11141b",
+    "axes.edgecolor": "#777777",
+    "axes.labelcolor": "#e7e1d8",
+    "axes.titlecolor": "#f5eadb",
+    "xtick.color": "#d2ccc2",
+    "ytick.color": "#d2ccc2",
+    "text.color": "#e7e1d8",
+    "grid.color": "#383a42",
+    "savefig.facecolor": "#11141b"
+})
 
 
 # =====================================================
@@ -154,8 +420,6 @@ NUMERIC_FEATURES = [
     col for col in FEATURES
     if col not in CATEGORICAL_FEATURES
 ]
-
-
 # =====================================================
 # 4. LOAD DATA AND SAVED MODEL
 # =====================================================
@@ -600,9 +864,7 @@ if page == "🏠 Overview":
         "A non-purchase session is not necessarily a confirmed "
         "cart-abandonment event."
     )
-
-
-# =====================================================
+    # =====================================================
 # 10. DATASET EXPLORER
 # =====================================================
 
@@ -1052,9 +1314,7 @@ elif page == "🔮 Purchase Predictor":
 
                 st.error(f"Prediction error: {e}")
                 st.exception(e)
-
-
-# =====================================================
+                # =====================================================
 # 12. MODEL EVALUATION
 # =====================================================
 
